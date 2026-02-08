@@ -1,0 +1,67 @@
+# irc-pbx
+asterisk docker stack with postgres
+
+
+Criar o arquivo .env com base no exemplo .env.example
+
+Colocar a senha do postgres nos seguintes arquivos:
+
+docker-compose-files/pbx/odbc.ini
+docker-compose-files/pbx/config/cdr_pgsql.conf
+docker-compose-files/pbx/config/res_odbc.conf
+docker-compose-files/pbx/config/res_pgsql.conf
+
+Baixar o asterisk 22.8.2 no site oficial e adicionar o arquivo compactado dentro da subpasta irc-pbx>
+https://www.asterisk.org/downloads/
+
+OBS: Caso usar versão diferente, alterar o caminho da pasta descompactada em ambos os Dockerfile.
+
+docker compose pull
+docker compose up -d postgres irc-pbx-makemenu --build
+
+terminar, o irc-pbx-makemenu vai ficar executando sem nenhum serviço ativo, somente para criar o make menu
+
+docker exec -it irc-pbx-makemenu bash
+dentro do container navegar até /usr/src/asterisk-22.8.2
+rodar: make menuselect
+
+recomendo adicionar todos os audios EN.
+apos isso vai criar na mesma pasta o arquivo menuselect.makeopts
+
+sair do container e copiar o arquivo para a subpasta irc-pbx
+
+docker cp irc-pbx-makemenu:/usr/stc/asterisk-22.8.2/menuselect.makeopts ./menuselect.makeopts
+
+desativar o irc-pbx-makemenu
+docker compose down
+
+compilar o irc-pbx
+
+docker compose up -d postgres irc-pbx --build
+
+abaixo insert para criar 2 ramais, 101 e o 102 com  dialplan testing.
+
+
+OBS: Note que no arquivo docker compose ele libera um intervalo de porta UDP da 10000 a 10030, caso demorar subir o container é por este motivo.
+Coloquei um intervalo pequeno para servidor de ambiente de desenvolvimento.
+Intervalo de 500 demora aproximadamente 2 mim para subir o container.
+
+Caso queira executar comandos remotamente no asterisk, editar o arquivo docker-compose-files/pbx/config/manager.conf setando senha e enabled para yes.
+
+
+
+
+insert into extensions_config (cat_metric, var_metric, commented, filename, category, var_name, var_val)
+values(1, 1, 0,'extensions.conf', 'testing', 'exten', '_1XX,1,NoOp()'),
+(1, 2, 0,'extensions.conf', 'testing', 'same', 'n,Dial(PJSIP/${EXTEN})');
+
+insert into ps_transports (id, bind, protocol, tcp_keepalive_enable) values('transport-udp', '0.0.0.0', 'udp', null);
+
+insert into ps_aors (id, max_contacts, remove_existing) values (101, 1, 'yes');
+insert into ps_aors (id, max_contacts, remove_existing) values (102, 1, 'yes');
+
+insert into ps_auths (id, auth_type, password, username) values (101, 'userpass', '101', 101);
+insert into ps_auths (id, auth_type, password, username) values (102, 'userpass', '102', 102);
+
+insert into ps_endpoints (id, transport, aors, auth, context, disallow, allow, direct_media, dtmf_mode, callerid, trust_id_outbound) values (101, 'transport-udp', '101', '101', 'testing', 'all', 'ulaw|alaw|g722|gsm', 'no', 'rfc4733', 'Cobaia 101 <101>', 'yes');
+insert into ps_endpoints (id, transport, aors, auth, context, disallow, allow, direct_media, dtmf_mode, callerid, trust_id_outbound) values (102, 'transport-udp', '102', '102', 'testing', 'all', 'ulaw|alaw|g722|gsm', 'no', 'rfc4733', 'Cobaia 102 <102>', 'yes');

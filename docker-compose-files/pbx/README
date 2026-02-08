@@ -1,0 +1,21 @@
+
+insert into extensions_config (cat_metric, var_metric, commented, filename, category, var_name, var_val)
+values(1, 1, 0,'extensions.conf', 'testing', 'exten', '_1XX,1,NoOp()'),
+(1, 2, 0,'extensions.conf', 'testing', 'same', 'n,Dial(PJSIP/${EXTEN})');
+
+INSERT INTO extensions_config (cat_metric, var_metric, commented,filename, category, var_name, var_val)
+VALUES (2, 1, 0,'extensions.conf', 'audio', 'exten', '_1XX,1,playback(caloteiro)');
+
+
+insert into ps_transports (id, bind, protocol, tcp_keepalive_enable) values('transport-udp', '0.0.0.0', 'udp', null);
+
+
+
+insert into ps_aors (id, max_contacts, remove_existing) values (101, 1, 'yes');
+insert into ps_aors (id, max_contacts, remove_existing) values (102, 1, 'yes');
+
+insert into ps_auths (id, auth_type, password, username) values (101, 'userpass', '101', 101);
+insert into ps_auths (id, auth_type, password, username) values (102, 'userpass', '102', 102);
+
+insert into ps_endpoints (id, transport, aors, auth, context, disallow, allow, direct_media, dtmf_mode, callerid, trust_id_outbound) values (101, 'transport-udp', '101', '101', 'testing', 'all', 'ulaw|alaw|g722|gsm', 'no', 'rfc4733', 'Cobaia 101 <101>', 'yes');
+insert into ps_endpoints (id, transport, aors, auth, context, disallow, allow, direct_media, dtmf_mode, callerid, trust_id_outbound) values (102, 'transport-udp', '102', '102', 'testing', 'all', 'ulaw|alaw|g722|gsm', 'no', 'rfc4733', 'Cobaia 102 <102>', 'yes');

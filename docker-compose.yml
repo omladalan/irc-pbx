@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./docker-compose-files/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./docker-compose-files/postgres/.pgsocket:/var/run/postgresql
+    ports:
+      - 127.0.0.1:5432:5432
+  irc-pbx:
+    depends_on:
+      - postgres
+    build:
+      dockerfile: ./irc-pbx/Dockerfile
+    restart: always  
+    container_name: irc-pbx
+    volumes:
+      - asterisk_data:/var/lib/asterisk
+      - ./docker-compose-files/pbx/config:/etc/asterisk
+      - ./docker-compose-files/pbx/odbc.ini:/etc/odbc.ini
+      - ./docker-compose-files/pbx/odbcinst.ini:/etc/odbcinst.ini      
+      - ./docker-compose-files/postgres/.pgsocket:/var/run/postgresql
+    ports:    
+      - 127.0.0.1:5038:5038
+      - 127.0.0.1:5060:5060/udp
+      - 127.0.0.1:5060:5060/tcp
+      - 127.0.0.1:5061:5061/tcp
+      - 127.0.0.1:8088:8088
+      - 127.0.0.1:8089:8089
+      - 127.0.0.1:5060:5060/tcp      
+      - 127.0.0.1:10000-10030:10000-10030/udp
+  irc-pbx-makemenu:
+    depends_on:
+      - postgres
+      - pgbouncer      
+    build:
+      dockerfile: ./irc-pbx/DockerfileMakeMenu
+    restart: always  
+    container_name: irc-pbx-makemenu
+volumes:
+  pg_data:
+  asterisk_data:
